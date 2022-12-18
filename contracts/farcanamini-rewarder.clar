@@ -4,8 +4,8 @@
 
 ;; define variables
 (define-constant rewarder 'ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM.farcanamini-rewarder)
-(define-constant winner 'ST3GV2DTMKHRG6DZM3MTC8YF4V2YF30SSB9AEHXNX)
-(define-map winners { id: uint, username: (string-utf8 256), account: principal } { rewarded: bool })
+(define-data-var winner principal 'ST3GV2DTMKHRG6DZM3MTC8YF4V2YF30SSB9AEHXNX)
+(define-map winners {account: principal} {rewarded: bool})
 (define-data-var apikey (string-utf8 500) u"")
 (define-data-var initOk bool false)
 (define-data-var balance uint u0)
@@ -32,7 +32,7 @@
 
 ;; sends the deposited amount to winner
 (define-private (payout-balance)
-  (unwrap-panic (as-contract (stx-transfer? (var-get balance) rewarder winner)))
+  (unwrap-panic (as-contract (stx-transfer? (var-get balance) rewarder (var-get winner))))
 )
 
 (define-private (isRewardApproved)
@@ -72,5 +72,13 @@
     (isRewardApproved)
     (var-set balance (+ amount (var-get balance)))
     (stx-transfer? amount tx-sender rewarder)
+  )
+)
+
+;; Filling the map of winners
+(define-public (addwinner (winaccount principal))
+  (begin
+    (var-set winner winaccount)
+    (ok (map-insert winners {account: winaccount} { rewarded: false}))
   )
 )
